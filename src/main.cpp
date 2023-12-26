@@ -5,6 +5,7 @@
 #include <can_utils.h>
 #include <create_task.h>
 #include <sim.h>
+#include <esp_task_wdt.h>
 
 const long interval_seconds = 1000;
 unsigned long timer = 0;
@@ -20,10 +21,13 @@ void setup()
   check_flags(wifi_server_conection(), "Wifi server no funciono", "Wifi server conectado");
   check_flags(build_web_server(), "Build web server no funciono", "Build web server conectado");
   check_flags(mqtt_server_init(), "Mqtt server no funciono", "Mqtt server conectado");
+  esp_task_wdt_init(WDTO_8S, true);
+  esp_task_wdt_add(NULL);
 }
 
 void loop()
 {
+  esp_task_wdt_reset();
   unsigned long current_timer = millis();
   if (current_timer - timer >= interval_seconds)
   {
