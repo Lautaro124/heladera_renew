@@ -4,10 +4,9 @@
 #include <HardwareSerial.h>
 #include <WiFi.h>
 
-#define RX_PIN 16 // Pin de recepción del módulo SIM800L
-#define TX_PIN 17 // Pin de transmisión del módulo SIM800L
+#define RX_PIN 16
+#define TX_PIN 17
 
-const char *phoneNumber = "numero_destino";
 HardwareSerial sim800(2);
 
 esp_err_t sim800_init();
@@ -27,19 +26,18 @@ esp_err_t sim800_init()
   updateSerial();
   sim800.println("AT+CMGF=1");
   updateSerial();
-  sim800.println("AT+CSQ"); // Signal quality test, value range is 0-31 , 31 is the best
+  sim800.println("AT+CSQ");
   updateSerial();
   sim800.println("AT+COPS?");
   updateSerial();
-  sim800.println("AT+CREG?"); // Check whether it has registered in the network
+  sim800.println("AT+CREG?");
   updateSerial();
-  sim800.println("AT+CCID"); // Read SIM information to confirm whether the SIM is plugged
+  sim800.println("AT+CCID");
   updateSerial();
   sim800.println("AT+CNMI=1,2,0,0,0");
   updateSerial();
   Serial.print("Message configuration end");
   Serial.println();
-  sendSMS("ESP");
   return ESP_OK;
 }
 
@@ -52,6 +50,7 @@ void sendSMS(const char *message)
   sim800.print(message);
   updateSerial();
   sim800.write(26);
+  delay(500);
 }
 
 void receiveSMS(void *parameters)
@@ -86,13 +85,13 @@ void receiveSMS(void *parameters)
 
 static void updateSerial()
 {
-  delay(500);
-  while (Serial.available())
+  delay(300);
+  if (sim800.available())
   {
-    sim800.write(Serial.read());
+    Serial.print(sim800.read());
   }
-  while (sim800.available())
-  {
-    Serial.write(sim800.read());
-  }
+  // if (Serial.available())
+  // {
+  //   sim800.write(Serial.read());
+  // }
 }

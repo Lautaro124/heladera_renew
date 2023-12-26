@@ -6,31 +6,42 @@
 #include <create_task.h>
 #include <sim.h>
 
-static void check_flags(esp_err_t process_flag);
+const long interval_seconds = 1000;
+unsigned long timer = 0;
+static void check_flags(esp_err_t process_flag, const char *error_text, const char *success_text);
 
 void setup()
 {
   Serial.begin(9600);
-  check_flags(wifi_server_conection());
-  check_flags(build_web_server());
-  check_flags(mqtt_server_init());
-  check_flags(sim800_init());
-  check_flags(can_init());
   create_task();
+  check_flags(sim800_init(), "Sim 800 no iniciado", "Sim 800 configurado");
+  delay(1000);
+  check_flags(can_init(), "Can desconectado", "Can conectado!");
+  check_flags(wifi_server_conection(), "Wifi server no funciono", "Wifi server conectado");
+  check_flags(build_web_server(), "Build web server no funciono", "Build web server conectado");
+  check_flags(mqtt_server_init(), "Mqtt server no funciono", "Mqtt server conectado");
 }
 
 void loop()
 {
+  unsigned long current_timer = millis();
+  if (current_timer - timer >= interval_seconds)
+  {
+    mqtt_loop();
+  }
   loop_server();
-  mqtt_loop();
   can_recibe_signal();
-  delay(1000);
+  delay(500);
 }
 
-static void check_flags(esp_err_t process_flag)
+static void check_flags(esp_err_t process_flag, const char *error_text, const char *success_text)
 {
   if (process_flag != ESP_OK)
   {
+    sendSMS(error_text);
+    Serial.print(error_text);
     ESP.restart();
   }
+  Serial.print(success_text);
+  sendSMS(success_text);
 }
